@@ -13,6 +13,9 @@ mp_drawing = mp.solutions.drawing_utils
 start_time = None
 total_rotation_time = 0  # 회전 총 시간을 저장할 변수
 
+# 각도 변화에 대한 임계값
+angle_change_threshold = 1.0
+
 def start_timer():
     global start_time
     start_time = time.time()
@@ -31,44 +34,63 @@ def calculate_wrist_thumb_angle(frame):
     results = hands.process(frame)
 
     if results.multi_hand_landmarks:
-        # 손목 랜드마크 추출 (오른손을 사용하도록 가정)
+        # 손목 랜드마크 추출 
         hand_landmarks = results.multi_hand_landmarks[0]
 
-        # 손목 랜드마크의 중심 지점 추출 (예: 0번 랜드마크는 손목 중심)
+        # 손목 중심과 엄지 손끝의 랜드마크 위치 추출
         wrist_center = hand_landmarks.landmark[0]
-
-        # 다른 특정 랜드마크(예: 4번 랜드마크, 엄지 손끝)의 위치 추출
         thumb_tip = hand_landmarks.landmark[4]
 
         # 손목에서 엄지 손끝까지의 벡터 계산
         wrist_thumb_vector = (thumb_tip.x - wrist_center.x, thumb_tip.y - wrist_center.y)
 
-        # x, y 좌표를 사용하여 손목-엄지 각도 계산 (라디안)
+        # x, y 좌표를 사용하여 손목-엄지 각도 계산 (라디안) -> 각도로 변환
         wrist_thumb_angle_rad = math.atan2(wrist_thumb_vector[1], wrist_thumb_vector[0])
-
-        # 라디안을 각도로 변환
         wrist_thumb_angle_deg = math.degrees(wrist_thumb_angle_rad)
 
         # 현재 손목-엄지 각도 출력
         print("현재 손목-엄지 각도:", wrist_thumb_angle_deg)
 
-        # 이전 프레임의 손목-엄지 각도가 있을 경우 변화 계산
+         # 이전 프레임의 손목-엄지 각도가 있을 경우 변화 계산
         if prev_wrist_thumb_angle is not None:
             # 각도 변화를 통해 회전 여부 확인
             angle_change = wrist_thumb_angle_deg - prev_wrist_thumb_angle
 
-            if angle_change > 0.5:  # 예시 값, 조절 가능
-                print("손목이 시계방향으로 회전 중")
-                cv2.putText(frame, f"Rotating left ..", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                            (0, 0, 255), 2)
-                start_timer()  # 회전이 시작되면 타이머 시작
-            elif angle_change < -0.5:  # 예시 값, 조절 가능
-                print("손목이 반시계방향으로 회전 중")
-                cv2.putText(frame, f"Rotating right ..", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5,
-                            (0, 0, 255), 2)
-                start_timer()  # 회전이 시작되면 타이머 시작
+            # 글씨 색 설정
+            text_color = (0, 0, 255)  # 빨간색
+
+            if abs(angle_change) > angle_change_threshold:
+                if angle_change > 0: 
+                    print("손목이 시계방향으로 회전 중")
+                    feedback = "Rotating left .."
+                    start_timer()
+                elif angle_change < 0:  
+                    print("손목이 반시계방향으로 회전 중")
+                    feedback = "Rotating right .."
+                    start_timer()
             else:
-                stop_timer()  # 각도 변화가 없으면 타이머 중지
+                feedback = ""
+                stop_timer()
+
+            # 텍스트 크기 및 폰트 설정
+            font_scale = 0.5
+            font_thickness = 2
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            text_position = (50, 100)
+
+            # 텍스트 크기 계산
+            (text_width, text_height), baseline = cv2.getTextSize(feedback, font, font_scale, font_thickness)
+            
+            # 텍스트 배경 추가
+            text_background_position = (text_position[0], text_position[1] - text_height)
+            text_background_size = (text_width, text_height + 5)
+            cv2.rectangle(frame, (text_background_position[0], text_background_position[1]),
+                          (text_background_position[0] + text_background_size[0], text_background_position[1] + text_background_size[1]),
+                          (255, 255, 255), cv2.FILLED)
+
+            # 텍스트 표시
+            cv2.putText(frame, feedback, text_position, font, font_scale, text_color, font_thickness)
+
 
         # 이전 손목-엄지 각도 갱신
         prev_wrist_thumb_angle = wrist_thumb_angle_deg
@@ -90,10 +112,10 @@ def calculate_wrist_thumb_angle(frame):
     if start_time is not None:
         elapsed_time = total_rotation_time + (time.time() - start_time)
         cv2.putText(frame, f"Total Rotation Time: {round(elapsed_time, 2)} s", (50, 50),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
 
-# 미디어 파이프의 Hand 모델을 로드합니다.
+# 미디어 파이프의 Hand 모델 로드
 mp_hands = mp.solutions.hands
 hands = mp_hands.Hands()
 

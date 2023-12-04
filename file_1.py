@@ -1,5 +1,3 @@
-#sqeeze_finger
-
 import cv2
 import mediapipe as mp
 import math
@@ -27,7 +25,7 @@ def perform_initial_setup():
             squeeze_strength_array = np.array(squeeze_strength_history)
             mean_squeeze_strength = np.mean(squeeze_strength_array)
             std_squeeze_strength = np.std(squeeze_strength_array)
-            threshold = mean_squeeze_strength + std_squeeze_strength
+            threshold = mean_squeeze_strength + std_squeeze_strength - 10
             print("초기 설정 완료.")
             print("평균 스퀴즈 강도:", mean_squeeze_strength)
             print("표준 편차:", std_squeeze_strength)
@@ -63,7 +61,6 @@ def calculate_finger_squeeze(frame):
     return None
 
 mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles
 mp_hands = mp.solutions.hands
 
 # 미디어 파이프의 Hand 모델 로드
@@ -97,16 +94,30 @@ while True:
             squeeze_strength = int(squeeze_strength)
             print("Squeeze Strength :", squeeze_strength)
 
-            if squeeze_strength > threshold:  # 예를 들어, 임계값을 10으로 설정
+            if squeeze_strength > threshold:  
                 feedback = "sqeeze more!"
             else:
                 feedback = "Great!"
 
             # 화면에 피드백 표시
-            cv2.putText(frame, feedback, (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            text_position = (50, 100)
+            font = cv2.FONT_HERSHEY_SIMPLEX
+            font_scale = 0.5
+            font_thickness = 2
+            text_size = cv2.getTextSize(feedback, font, font_scale, font_thickness)[0]
+
+            # 텍스트 배경 추가
+            text_background_position = (text_position[0], text_position[1] - text_size[1])
+            text_background_size = (text_size[0], text_size[1] + 5)
+            cv2.rectangle(frame, (text_background_position[0], text_background_position[1]),
+                          (text_background_position[0] + text_background_size[0], text_background_position[1] + text_background_size[1]),
+                          (255, 255, 255), cv2.FILLED)
+
+            # 텍스트 표시
+            cv2.putText(frame, feedback, (50, 100), font, font_scale, (0, 0, 255), font_thickness)
 
             # 스퀴즈 강도 및 피드백를 화면에 표시
-            cv2.putText(frame, f"squeeze_strength : {squeeze_strength}", (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            cv2.putText(frame, f"squeeze_strength : {squeeze_strength}", (50, 50), font, font_scale, (0, 0, 255), font_thickness)
 
     # 현재 시간을 가져와서 프레임에 표시
     elapsed_time = time.time() - start_time

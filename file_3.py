@@ -1,5 +1,3 @@
-#arm_reflexion
-
 import cv2
 import mediapipe as mp
 import math
@@ -66,6 +64,7 @@ def calculate_arm_flexion(frame, bent_count, previous_flexion_state, current_arm
         elbow_coords = (int(elbow.x * frame.shape[1]), int(elbow.y * frame.shape[0]))
         wrist_coords = (int(wrist.x * frame.shape[1]), int(wrist.y * frame.shape[0]))
 
+        
         cv2.line(frame, shoulder_coords, elbow_coords, (0, 0, 255), 3)
         cv2.line(frame, elbow_coords, wrist_coords, (0, 0, 255), 3)
         cv2.circle(frame, shoulder_coords, 5, (0, 255, 0), -1)
@@ -100,26 +99,56 @@ while True:
         flexion_angle, flexion_state, bent_count_right = calculate_arm_flexion(frame, bent_count_right, previous_flexion_state_right, current_arm)
 
     if flexion_angle is not None:
+            
         # 텍스트를 화면에 표시
         if current_arm == "left":
-            cv2.putText(frame, f"Left arm flexion state: {flexion_state}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-            cv2.putText(frame, f"Left arm bending angle: {round(flexion_angle, 2)} degrees", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-            cv2.putText(frame, f"Left bent count: {bent_count_left}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+            # 왼쪽 팔의 피드백 메시지에 흰 배경 추가
+            text = f"Left arm flexion state: {flexion_state}"
+            (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+
+            # 흰 배경의 사각형 그리기
+            cv2.rectangle(frame, (10, 60 - text_height), (15 + text_width, 60), (255, 255, 255), -1)
+
+            # 텍스트 추가
+            cv2.putText(frame, text, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+            text = f"Left arm bending angle: {round(flexion_angle, 2)} degrees"
+            (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+            cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+            text = f"Left bent count: {bent_count_left}"
+            (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+            cv2.rectangle(frame, (10, 90 - text_height), (15 + text_width, 90), (255, 255, 255), -1)
+            cv2.putText(frame, text, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             previous_flexion_state_left = flexion_state
+
         else:
-            cv2.putText(frame, f"Right arm flexion state: {flexion_state}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-            cv2.putText(frame, f"Right arm bending angle: {round(flexion_angle, 2)} degrees", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
-            cv2.putText(frame, f"Right bent count: {bent_count_right}", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+            # 오른쪽 팔의 피드백 메시지에 흰 배경 추가
+            text = f"Right arm flexion state: {flexion_state}"
+            (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+            cv2.rectangle(frame, (10, 60 - text_height), (15 + text_width, 60), (255, 255, 255), -1)
+            cv2.putText(frame, text, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+            text = f"Right arm bending angle: {round(flexion_angle, 2)} degrees"
+            (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+            cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+
+            text = f"Right bent count: {bent_count_right}"
+            (text_width, text_height), _ = cv2.getTextSize(text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+            cv2.rectangle(frame, (10, 90 - text_height), (15 + text_width, 90), (255, 255, 255), -1)
+            cv2.putText(frame, text, (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
             previous_flexion_state_right = flexion_state
+
 
     # 화면에 프레임 표시
     cv2.imshow("Video", frame)
 
-    # 현재 팔을 바꿈 (20번까지 왼쪽 팔, 20번 이상이면 오른쪽 팔로 전환)
-    if current_arm == "left" and bent_count_left >= 20:
+    # 현재 팔을 바꿈 (10번까지 왼쪽 팔, 10번 이상이면 오른쪽 팔로 전환)
+    if current_arm == "left" and bent_count_left >= 10:
         current_arm = "right"
         bent_count_left = 0
-    elif current_arm == "right" and bent_count_right >= 20:
+    elif current_arm == "right" and bent_count_right >= 10:
         current_arm = "left"
         bent_count_right = 0
 

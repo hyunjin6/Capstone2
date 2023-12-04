@@ -3,11 +3,24 @@
 import cv2
 import mediapipe as mp
 import math
+import pygame
 
 mp_face_detection = mp.solutions.face_detection
 mp_drawing = mp.solutions.drawing_utils
 mp_face_mesh = mp.solutions.face_mesh
 
+
+# 알림 소리 파일 경로
+sound_file_path = "alarm.mp3"
+
+# Pygame 초기화
+pygame.mixer.init()
+
+# 알림 소리 재생
+def play_notification_sound():
+    pygame.mixer.music.load(sound_file_path)
+    pygame.mixer.music.play()
+    
 # 얼굴 회전 각도를 계산하는 함수
 def calculate_face_rotation(frame):
     # 얼굴 감지
@@ -32,10 +45,14 @@ def calculate_face_rotation(frame):
                 angle_deg = math.degrees(angle)
 
                 # 얼굴이 왼쪽으로 향하는지 오른쪽으로 향하는지 확인
-                if angle_deg < 90:
+                if -90 < angle_deg < 90:
                     face_direction_text = "Face is oriented to the right"
+                    if-10 < angle_deg < 10:
+                        play_notification_sound()
                 else:
                     face_direction_text = "Face is oriented to the left"
+                    if angle_deg > 170 or angle_deg < -170:
+                        play_notification_sound()
 
                 # 원하는 랜드마크의 인덱스 정의
                 desired_landmarks = [10, 234, 454, 5]
@@ -73,11 +90,14 @@ while True:
         print(face_direction_text)
 
         # 각도 및 방향 정보 표시
-        cv2.putText(frame, f"Face Rotation Angle: {round(rotation_angle, 2)} degrees", (10, 30),
-                    cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
+        text = f"Face Rotation Angle: {round(rotation_angle, 2)} degrees"
+        (text_width, text_height), _ = cv2.getTextSize(face_direction_text, cv2.FONT_HERSHEY_SIMPLEX, 0.5, 2)
+        cv2.rectangle(frame, (10, 60 - text_height), (15 + text_width, 60), (255, 255, 255), -1)
+        cv2.putText(frame, text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         cv2.putText(frame, face_direction_text, (10, 60),
                     cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
 
+        
     cv2.imshow("Video", frame)
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
