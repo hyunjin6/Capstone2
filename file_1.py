@@ -27,11 +27,11 @@ def perform_initial_setup():
             squeeze_strength_array = np.array(squeeze_strength_history)
             mean_squeeze_strength = np.mean(squeeze_strength_array)
             std_squeeze_strength = np.std(squeeze_strength_array)
-            threshold = mean_squeeze_strength + std_squeeze_strength - 10
+            threshold = mean_squeeze_strength - std_squeeze_strength
             print("초기 설정 완료.")
             print("평균 스퀴즈 강도:", mean_squeeze_strength)
             print("표준 편차:", std_squeeze_strength)
-            print("임계값 설정 완료:", threshold)
+            print("기준값 설정 완료:", threshold)
 
 # 손가락 스퀴즈 강도 계산 함수
 def calculate_finger_squeeze(frame):
@@ -94,7 +94,7 @@ while True:
         # 스퀴즈 강도에 따라 피드백 주기
         if squeeze_strength is not None:
             squeeze_strength = int(squeeze_strength)
-            print("Squeeze Strength :", squeeze_strength)
+            print("Squeeze Strength(Distance) :", squeeze_strength)
 
             if squeeze_strength > threshold:  
                 feedback = "sqeeze more!"
